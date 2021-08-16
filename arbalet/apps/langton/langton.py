@@ -20,7 +20,7 @@ class Langton(Application):
         self.y = self.height//2
         self.dir = 0
 
-        self.rate = self.args.rate if self.args.rate > 0 else 5
+        self.rate = self.args.rate
         self.fade_dur = min(1/self.rate, self.args.fade_dur)
 
     def run(self):
