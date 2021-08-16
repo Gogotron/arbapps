@@ -10,20 +10,23 @@
     License: GPL version 3 http://www.gnu.org/licenses/gpl.html
 """
 from arbalet.core import Application, Rate
-from arbalet.colors import equal
+from arbalet.colors import equal, name_to_rgb
 
 
 class Langton(Application):
-    def __init__(self):
-        Application.__init__(self)
+    def __init__(self, parser):
+        Application.__init__(self, parser)
         self.x = self.width//2
         self.y = self.height//2
         self.dir = 0
 
+        self.rate = self.args.rate if self.args.rate > 0 else 5
+        self.fade_dur = min(1/self.rate, self.args.fade_dur)
+
     def run(self):
         self.model.set_all('black')
 
-        rate = Rate(50)
+        rate = Rate(self.rate)
         while True:
             self.step()
             rate.sleep()
@@ -42,9 +45,10 @@ class Langton(Application):
 
     def flip_square(self):
         if equal(self.model.get_pixel(self.y, self.x), 'white'):
-            self.model.set_pixel(self.y, self.x, 'black')
+            current, next = 'white', 'black'
         else:
-            self.model.set_pixel(self.y, self.x, 'white')
+            current, next = 'black', 'white'
+        self.fade(self.y, self.x, current, next)
 
     def move_forward(self):
         if self.dir == 0:
@@ -57,3 +61,19 @@ class Langton(Application):
             self.y -= 1
         self.x %= self.width
         self.y %= self.height
+
+    def fade(self, y, x, start, end):
+        if isinstance(start, str):
+            start = name_to_rgb(start)
+        if isinstance(end, str):
+            end = name_to_rgb(end)
+        steps = 300
+        duration = self.fade_dur
+        if duration != 0:
+            rate = Rate(steps/duration)
+            for i in range(1, steps+1):
+                col = (start*(steps-i) + end*i)/steps
+                self.model.set_pixel(y, x, col)
+                rate.sleep()
+        else:
+            self.model.set_pixel(y, x, end)
