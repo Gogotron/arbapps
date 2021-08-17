@@ -10,7 +10,9 @@
     License: GPL version 3 http://www.gnu.org/licenses/gpl.html
 """
 from arbalet.core import Application, Rate
-from arbalet.colors import equal, name_to_rgb
+from arbalet.colors import name_to_rgb, cnames
+from random import sample
+from numpy import allclose
 
 
 class Langton(Application):
@@ -22,20 +24,29 @@ class Langton(Application):
 
         self.rate = self.args.rate
         self.fade_dur = min(1/self.rate, self.args.fade_dur)
+        self.scheme = self.args.scheme
+        if self.args.colors and len(self.args.colors) != len(self.scheme):
+            print(
+                'Warning: '
+                'Number of colors does not match length of scheme. '
+                'Proceding with random colors.'
+            )
+        if not self.args.colors or len(self.args.colors) != len(self.scheme):
+            self.args.colors = sample(tuple(cnames.values()), len(cnames))
+        self.colors = self.args.colors[:len(self.scheme)]
 
     def run(self):
-        self.model.set_all('black')
+        self.model.set_all(self.colors[0])
 
         rate = Rate(self.rate)
+        rate.sleep()
         while True:
             self.step()
             rate.sleep()
 
     def step(self):
-        if equal(self.model.get_pixel(self.y, self.x), 'white'):
-            self.turn(1)
-        else:
-            self.turn(-1)
+        i = self.color_index(self.model.get_pixel(self.y, self.x))
+        self.turn(self.scheme[i])
         self.flip_square()
         self.move_forward()
 
@@ -44,10 +55,9 @@ class Langton(Application):
         self.dir %= 4
 
     def flip_square(self):
-        if equal(self.model.get_pixel(self.y, self.x), 'white'):
-            current, next = 'white', 'black'
-        else:
-            current, next = 'black', 'white'
+        current = self.model.get_pixel(self.y, self.x)
+        i = self.color_index(current)
+        next = self.colors[(i+1)%len(self.colors)]
         self.fade(self.y, self.x, current, next)
 
     def move_forward(self):
@@ -77,3 +87,9 @@ class Langton(Application):
                 rate.sleep()
         else:
             self.model.set_pixel(y, x, end)
+
+    def color_index(self, target_color):
+        for i, col in enumerate(self.colors):
+            if allclose(col, target_color):
+                return i
+        raise ValueError()
