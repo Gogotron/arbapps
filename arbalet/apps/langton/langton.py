@@ -10,7 +10,7 @@
     License: GPL version 3 http://www.gnu.org/licenses/gpl.html
 """
 from arbalet.core import Application, Rate
-from arbalet.colors import name_to_rgb, cnames
+from arbalet.colors import cnames
 from random import sample
 from numpy import allclose
 
@@ -58,7 +58,7 @@ class Langton(Application):
         current = self.model.get_pixel(self.y, self.x)
         i = self.color_index(current)
         next = self.colors[(i+1)%len(self.colors)]
-        self.fade(self.y, self.x, current, next)
+        self.fade(current, next)
 
     def move_forward(self):
         if self.dir == 0:
@@ -72,21 +72,17 @@ class Langton(Application):
         self.x %= self.width
         self.y %= self.height
 
-    def fade(self, y, x, start, end):
-        if isinstance(start, str):
-            start = name_to_rgb(start)
-        if isinstance(end, str):
-            end = name_to_rgb(end)
+    def fade(self, start, end):
         steps = 300
         duration = self.fade_dur
         if duration != 0:
             rate = Rate(steps/duration)
             for i in range(1, steps+1):
                 col = (start*(steps-i) + end*i)/steps
-                self.model.set_pixel(y, x, col)
+                self.model.set_pixel(self.y, self.x, col)
                 rate.sleep()
         else:
-            self.model.set_pixel(y, x, end)
+            self.model.set_pixel(self.y, self.x, end)
 
     def color_index(self, target_color):
         for i, col in enumerate(self.colors):
