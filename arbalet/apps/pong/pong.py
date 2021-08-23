@@ -7,25 +7,38 @@
     License: GPL version 3 http://www.gnu.org/licenses/gpl.html
 """
 from arbalet.core import Application, Rate
+from random import randrange
 
 
 class Pong(Application):
+    BACKGROUND_COLOR = 'black'
+    BALL_COLOR = 'lightgreen'
+    PADDLE_COLOR = 'cyan'
+
     def __init__(self):
         Application.__init__(self)
 
     def run(self):
-        self.bpos = [0, 0]
-        self.bspeed = [1, 1]
-        self.ppos = 0
-        rate = Rate(5)
+        self.score = 0
+        rate = Rate(8)
+        self.place_paddle()
+        self.place_ball()
         while True:
             self.move_paddle()
-            self.move_ball()
+            ball_passed = self.move_ball()
             with self.model:
                 self.model.set_all('black')
                 self.draw_paddle()
-                self.draw_ball()
+                if not ball_passed:
+                    self.draw_ball()
             rate.sleep()
+            if ball_passed:
+                break
+        self.game_over()
+
+    def place_ball(self):
+        self.bpos = [randrange(self.width), 0]
+        self.bspeed = [(-1)**randrange(2), 1]
 
     def move_ball(self):
         self.bpos[0] += self.bspeed[0]
@@ -37,16 +50,20 @@ class Pong(Application):
         if not 0 <= self.bpos[1]:
             self.bspeed[1] *= -1
             self.bpos[1] = max(0, self.bpos[1])
+
         if self.bpos[1] >= self.height:
-            print('game over')
-            self.bpos = [0, 0]
+            return True
         elif self.bpos[1] >= self.height-2:
             if self.ppos <= self.bpos[0] < self.ppos+3:
                 self.bspeed[1] *= -1
                 self.bpos[1] = self.height-2
+                self.score += 1
 
     def draw_ball(self):
-        self.model.set_pixel(int(self.bpos[1]), int(self.bpos[0]), 'white')
+        self.model.set_pixel(self.bpos[1], self.bpos[0], self.BALL_COLOR)
+
+    def place_paddle(self):
+        self.ppos = (self.width-3) // 2
 
     def move_paddle(self):
         self.process_events()
@@ -58,7 +75,11 @@ class Pong(Application):
 
     def draw_paddle(self):
         for i in range(3):
-            self.model.set_pixel(14, int(self.ppos)+i, 'cyan')
+            self.model.set_pixel(14, self.ppos+i, self.PADDLE_COLOR)
 
     def bound(self, x, m, M):
         return max(m, min(x, M))
+
+    def game_over(self):
+        self.model.flash()
+        self.model.write(f"GAME OVER! Score: {self.score}", 'deeppink')
