@@ -75,7 +75,7 @@ class Pong(Application):
 
     def draw_paddle(self):
         for i in range(3):
-            self.model.set_pixel(14, self.ppos+i, self.PADDLE_COLOR)
+            self.model.set_pixel(self.height-1, self.ppos+i, self.PADDLE_COLOR)
 
     def bound(self, x, m, M):
         return max(m, min(x, M))
