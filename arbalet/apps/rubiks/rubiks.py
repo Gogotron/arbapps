@@ -1,3 +1,11 @@
+#!/usr/bin/env python
+"""
+    Arbalet - ARduino-BAsed LEd Table
+    Rubik's cube
+
+    Copyright 2021 Iñigo Diaz Iribarnegaray - http://github.com/Gogotron
+    License: GPL version 3 http://www.gnu.org/licenses/gpl.html
+"""
 from arbalet.core import Application, Rate
 from .cube import Cube
 from random import choice
