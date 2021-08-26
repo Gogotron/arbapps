@@ -15,15 +15,19 @@ class Pong(Application):
     BALL_COLOR = 'lightgreen'
     PADDLE_COLOR = 'cyan'
 
-    def __init__(self):
-        Application.__init__(self)
+    def __init__(self, parser):
+        Application.__init__(self, parser)
+        self.rate = 8
+        self.rate_increase = self.args.speed
 
     def run(self):
         self.score = 0
-        rate = Rate(8)
+        rate = Rate(self.rate)
         self.place_paddle()
         self.place_ball()
         while True:
+            rate.sleep_dur = 1/self.rate
+
             self.move_paddle()
             ball_passed = self.move_ball()
             with self.model:
@@ -58,6 +62,7 @@ class Pong(Application):
                 self.bspeed[1] *= -1
                 self.bpos[1] = self.height-2
                 self.score += 1
+                self.rate += self.rate_increase
 
     def draw_ball(self):
         self.model.set_pixel(self.bpos[1], self.bpos[0], self.BALL_COLOR)
