@@ -8,6 +8,7 @@
 """
 from arbalet.core import Application, Rate
 from random import randrange
+from math import ceil
 
 
 class Pong(Application):
@@ -19,6 +20,10 @@ class Pong(Application):
         Application.__init__(self, parser)
         self.rate = 8
         self.rate_increase = self.args.speed
+        try:
+            self.paddle_size = self.bound(self.args.size, 1, self.width)
+        except TypeError:
+            self.paddle_size = ceil(self.width/4)
 
     def run(self):
         self.score = 0
@@ -58,7 +63,7 @@ class Pong(Application):
         if self.bpos[1] >= self.height:
             return True
         elif self.bpos[1] >= self.height-2:
-            if self.ppos <= self.bpos[0] < self.ppos+3:
+            if self.ppos <= self.bpos[0] < self.ppos+self.paddle_size:
                 self.bspeed[1] *= -1
                 self.bpos[1] = self.height-2
                 self.score += 1
@@ -68,7 +73,7 @@ class Pong(Application):
         self.model.set_pixel(self.bpos[1], self.bpos[0], self.BALL_COLOR)
 
     def place_paddle(self):
-        self.ppos = (self.width-3) // 2
+        self.ppos = (self.width-self.paddle_size) // 2
 
     def move_paddle(self):
         self.process_events()
@@ -76,10 +81,10 @@ class Pong(Application):
             self.ppos -= 1
         if self.command['right']:
             self.ppos += 1
-        self.ppos = self.bound(self.ppos, 0, self.width-3)
+        self.ppos = self.bound(self.ppos, 0, self.width-self.paddle_size)
 
     def draw_paddle(self):
-        for i in range(3):
+        for i in range(self.paddle_size):
             self.model.set_pixel(self.height-1, self.ppos+i, self.PADDLE_COLOR)
 
     def bound(self, x, m, M):
